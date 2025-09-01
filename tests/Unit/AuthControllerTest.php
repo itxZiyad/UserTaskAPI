@@ -168,3 +168,4 @@ class AuthControllerTest extends TestCase
         $this->assertEquals('Invalid credentials', $responseData['message']);
     }
 }
+
