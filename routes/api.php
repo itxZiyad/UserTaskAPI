@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Middleware\ForceJsonResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,12 @@ Route::middleware([ForceJsonResponse::class])->group(function () {
         Route::post('/uploads', [UploadController::class, 'store']);
         Route::get('/uploads/{upload}', [UploadController::class, 'show']);
         Route::delete('/uploads/{upload}', [UploadController::class, 'destroy']);
+
+        Route::get('/invoices', [InvoiceController::class, 'index']);
+        Route::post('/invoices', [InvoiceController::class, 'store']);
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
+        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
     });
 });
 
