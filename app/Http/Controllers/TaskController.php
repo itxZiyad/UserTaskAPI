@@ -7,12 +7,37 @@ use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
 	public function index()
 	{
 		$user = Auth::user();
+
+		$shouldUseStoredProcedure = (bool) env('USE_SP_TASKS', false);
+		$defaultConnection = DB::getDefaultConnection();
+		$driver = config("database.connections.$defaultConnection.driver");
+
+		if ($shouldUseStoredProcedure && $driver !== 'sqlite') {
+			try {
+				$isAdmin = $user->role === 'admin' ? 1 : 0;
+				if (in_array($driver, ['mysql', 'mariadb'])) {
+					$rows = DB::select('CALL sp_list_tasks(?, ?)', [$user->id, $isAdmin]);
+				} elseif ($driver === 'sqlsrv') {
+					$rows = DB::select('EXEC dbo.sp_list_tasks @user_id = ?, @is_admin = ?', [$user->id, $isAdmin]);
+				} elseif ($driver === 'pgsql') {
+					$rows = DB::select('SELECT * FROM sp_list_tasks(?, ?)', [$user->id, $isAdmin]);
+				} else {
+					$rows = [];
+				}
+
+				return response()->json($rows);
+			} catch (\Throwable $e) {
+				// Fallback to Eloquent-based listing if the stored procedure is unavailable
+			}
+		}
+
 		$tasks = $user->role === 'admin' ? Task::query()->latest()->get() : $user->tasks()->latest()->get();
 		return response()->json($tasks);
 	}

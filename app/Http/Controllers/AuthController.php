@@ -8,6 +8,7 @@ use App\Http\Requests\LoginRequest;
 use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB; // <-- Add this
 use App\Mail\WelcomeMail;
 
 class AuthController extends Controller
@@ -25,6 +26,10 @@ class AuthController extends Controller
 
 		$token = JWTAuth::fromUser($user);
 
+		// Example: Call stored procedure after registration
+		// Suppose your SP is `sp_log_registration` and expects user_id & role
+		DB::statement('CALL sp_log_registration(?, ?)', [$user->id, $user->role]);
+
 		return response()->json([
 			'user' => $user,
 			'token' => $token,
@@ -39,9 +44,15 @@ class AuthController extends Controller
 			return response()->json(['message' => 'Invalid credentials'], 401);
 		}
 
+		$user = auth()->user();
+
+		// Example: Call stored procedure after login
+		// Suppose your SP is `sp_log_login` and expects user_id
+		DB::statement('CALL sp_log_login(?)', [$user->id]);
+
 		return response()->json([
 			'token' => $token,
-			'user' => auth()->user(),
+			'user' => $user,
 		]);
 	}
 }

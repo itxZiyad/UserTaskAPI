@@ -54,6 +54,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Task::class);
     }
 
+    public function uploads(): HasMany
+    {
+        return $this->hasMany(Upload::class);
+    }
+
     public function getJWTIdentifier(): mixed
     {
         return $this->getKey();
